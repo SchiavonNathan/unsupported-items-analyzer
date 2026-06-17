@@ -1,0 +1,1930 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório de Itens Não Suportados Zabbix</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: rgba(17, 24, 39, 0.7);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --text-muted: #6b7280;
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --primary-glow: rgba(99, 102, 241, 0.15);
+            
+            --error-color: #f87171;
+            --badge-bg: rgba(99, 102, 241, 0.12);
+            --badge-text: #a5b4fc;
+            --type-bg: rgba(6, 182, 212, 0.1);
+            --type-text: #22d3ee;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(6, 182, 212, 0.05) 0%, transparent 40%);
+            background-attachment: fixed;
+        }
+
+        header {
+            border-bottom: 1px solid var(--card-border);
+            backdrop-filter: blur(12px);
+            background-color: rgba(11, 15, 25, 0.8);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.25rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-section h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            background: linear-gradient(to right, #ffffff, var(--text-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .badge {
+            background: linear-gradient(135deg, var(--primary), #06b6d4);
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.25rem 0.6rem;
+            border-radius: 9999px;
+            color: white;
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.3);
+        }
+
+        .controls-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .last-update {
+            font-size: 0.825rem;
+            color: var(--text-secondary);
+        }
+
+        .btn {
+            font-family: inherit;
+            font-size: 0.875rem;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--card-border);
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            color: var(--text-primary);
+            background-color: rgba(255, 255, 255, 0.05);
+            user-select: none;
+        }
+
+        .btn:hover:not(:disabled) {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .btn-sm {
+            padding: 0.35rem 0.75rem;
+            font-size: 0.8rem;
+            border-radius: 0.375rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            border-color: transparent;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background-color: var(--primary-hover);
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.35);
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .btn svg.spin {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        main {
+            flex: 1;
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        /* Metrics grid */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.25rem;
+        }
+
+        .metric-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            backdrop-filter: blur(8px);
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: transparent;
+        }
+
+        .metric-card.total::before { background: var(--error-color); }
+        .metric-card.hosts::before { background: var(--primary); }
+        .metric-card.types::before { background: #06b6d4; }
+
+        .metric-title {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .metric-value {
+            font-size: 2.25rem;
+            font-weight: 700;
+            line-height: 1.1;
+        }
+
+        .metric-desc {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        /* Filter Panel */
+        .filter-panel {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 1rem;
+            padding: 1.25rem;
+            backdrop-filter: blur(8px);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .filter-group.search {
+            flex: 2;
+            min-width: 300px;
+        }
+
+        .filter-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .input-control {
+            background-color: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--card-border);
+            border-radius: 0.5rem;
+            padding: 0.6rem 1rem;
+            font-family: inherit;
+            font-size: 0.875rem;
+            color: var(--text-primary);
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            width: 100%;
+        }
+
+        .input-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+        }
+
+        select.input-control {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 1rem;
+            padding-right: 2.25rem;
+        }
+
+        select.input-control option {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+        }
+
+        .select-sm {
+            padding: 0.35rem 1.75rem 0.35rem 0.75rem;
+            font-size: 0.8rem;
+            border-radius: 0.375rem;
+            width: auto;
+            display: inline-block;
+        }
+
+        .btn-reset {
+            margin-top: 1.25rem;
+            height: calc(0.6rem * 2 + 0.875rem + 2px); /* match input height */
+        }
+
+        /* Results Area */
+        .results-container {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 1rem;
+            backdrop-filter: blur(8px);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .results-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--card-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .results-title {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .results-count {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            background: rgba(255, 255, 255, 0.05);
+            padding: 0.2rem 0.6rem;
+            border-radius: 0.375rem;
+            border: 1px solid var(--card-border);
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            width: 100%;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.875rem;
+        }
+
+        th {
+            background-color: rgba(255, 255, 255, 0.01);
+            font-weight: 600;
+            color: var(--text-secondary);
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--card-border);
+            user-select: none;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            color: var(--text-primary);
+            max-width: 350px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr {
+            transition: background-color 0.15s;
+        }
+
+        tr.row-hover:hover {
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+
+        .item-key {
+            font-family: monospace;
+            background-color: rgba(255, 255, 255, 0.05);
+            padding: 0.15rem 0.35rem;
+            border-radius: 0.25rem;
+            color: #ec4899;
+            font-size: 0.75rem;
+        }
+
+        .type-badge {
+            font-family: monospace;
+            background-color: var(--type-bg);
+            color: var(--type-text);
+            padding: 0.15rem 0.4rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            border: 1px solid rgba(6, 182, 212, 0.15);
+            display: inline-block;
+        }
+
+        .error-text {
+            color: var(--error-color);
+            white-space: normal;
+            word-break: break-all;
+            line-height: 1.4;
+            max-width: 450px;
+        }
+
+        .text-wrap-cell {
+            white-space: normal;
+            word-break: break-all;
+            line-height: 1.4;
+        }
+
+        /* Pagination Bar */
+        .pagination-bar {
+            padding: 1.25rem 1.5rem;
+            border-top: 1px solid var(--card-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            background-color: rgba(255, 255, 255, 0.01);
+        }
+
+        .pagination-info {
+            font-size: 0.825rem;
+            color: var(--text-secondary);
+        }
+
+        .pagination-buttons {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .page-indicator {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            padding: 0 0.5rem;
+            user-select: none;
+        }
+
+        .pagination-limit {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.825rem;
+            color: var(--text-secondary);
+        }
+
+        /* Empty & Loading states */
+        .empty-state {
+            padding: 4rem 2rem;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .empty-state svg {
+            width: 4rem;
+            height: 4rem;
+            color: var(--text-muted);
+        }
+
+        .empty-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .empty-desc {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            max-width: 400px;
+        }
+
+        .loading-state {
+            padding: 6rem 2rem;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+        }
+
+        .loading-spinner {
+            width: 3rem;
+            height: 3rem;
+            border: 3px solid rgba(255, 255, 255, 0.08);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        /* Tabs */
+        .tab-bar {
+            display: flex;
+            gap: 0.5rem;
+            border-bottom: 1px solid var(--card-border);
+            margin-bottom: -1rem;
+        }
+
+        .tab-btn {
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 600;
+            padding: 0.85rem 1.25rem;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: color 0.2s, border-color 0.2s;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .tab-btn.active {
+            color: var(--text-primary);
+            border-bottom-color: var(--primary);
+        }
+
+        /* Coverage badges */
+        .coverage-badge {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.2rem 0.55rem;
+            border-radius: 9999px;
+            display: inline-block;
+            white-space: nowrap;
+        }
+
+        .coverage-ok {
+            background-color: rgba(16, 185, 129, 0.12);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.25);
+        }
+
+        .coverage-gap {
+            background-color: rgba(248, 113, 113, 0.12);
+            color: #f87171;
+            border: 1px solid rgba(248, 113, 113, 0.25);
+        }
+
+        .priority-badge {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.2rem 0.6rem;
+            border-radius: 9999px;
+            display: inline-block;
+            white-space: nowrap;
+        }
+
+        .priority-alta {
+            background-color: rgba(248, 113, 113, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(248, 113, 113, 0.3);
+        }
+
+        .priority-media {
+            background-color: rgba(251, 191, 36, 0.15);
+            color: #fbbf24;
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+
+        .priority-baixa {
+            background-color: rgba(52, 211, 153, 0.12);
+            color: #34d399;
+            border: 1px solid rgba(52, 211, 153, 0.25);
+        }
+
+        .rank-cell {
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        .metric-card.focus::before { background: var(--error-color); }
+
+        .metric-card.coverage::before { background: #34d399; }
+        .metric-card.gap::before { background: var(--error-color); }
+
+        .dep-badge {
+            font-family: monospace;
+            background-color: rgba(99, 102, 241, 0.12);
+            color: #a5b4fc;
+            padding: 0.15rem 0.45rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+        }
+
+        footer {
+            margin-top: auto;
+            border-top: 1px solid var(--card-border);
+            padding: 1.5rem 2rem;
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            background-color: rgba(11, 15, 25, 0.4);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-container">
+            <div class="logo-section">
+                <h1>Painel de Itens Não Suportados</h1>
+                <span class="badge">Zabbix</span>
+            </div>
+            <div class="controls-section">
+                <span class="last-update" id="last-update-time">Última atualização: --:--:--</span>
+                <button class="btn" id="btn-export" style="background-color: #10b981; border-color: transparent; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);">
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    <span>Exportar Excel</span>
+                </button>
+                <button class="btn btn-primary" id="btn-refresh">
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" id="icon-refresh">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 16H18" />
+                    </svg>
+                    <span>Atualizar</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Tab Bar -->
+        <nav class="tab-bar">
+            <button class="tab-btn active" id="tab-unsupported" data-view="unsupported">Itens Não Suportados</button>
+            <button class="tab-btn" id="tab-masters" data-view="masters">Coletas Master (nodata)</button>
+            <button class="tab-btn" id="tab-priorities" data-view="priorities">Ordem de Resolução</button>
+        </nav>
+
+        <!-- View: Itens Não Suportados -->
+        <div id="view-unsupported" style="display: flex; flex-direction: column; gap: 2rem;">
+        <!-- Metrics Grid -->
+        <section class="metrics-grid">
+            <div class="metric-card total">
+                <span class="metric-title">Itens Não Suportados</span>
+                <span class="metric-value" id="metric-total">0</span>
+                <span class="metric-desc">Total de itens com falha de coleta ativa</span>
+            </div>
+            <div class="metric-card hosts">
+                <span class="metric-title">Hosts com Erros</span>
+                <span class="metric-value" id="metric-hosts">0</span>
+                <span class="metric-desc">Hosts que possuem itens com erro de coleta</span>
+            </div>
+            <div class="metric-card types">
+                <span class="metric-title">Tipos de Coleta Afetados</span>
+                <span class="metric-value" id="metric-types">0</span>
+                <span class="metric-desc">Diferentes protocolos/métodos com erro</span>
+            </div>
+        </section>
+ 
+        <!-- Section: Maiores Ofensores por Categoria -->
+        <section class="results-container" style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 1rem;">
+            <div class="results-header" style="border-bottom: 1px solid var(--card-border);">
+                <h2 class="results-title">Maiores Ofensores por Categoria de Hostgroup</h2>
+                <div class="results-count">Diagnóstico Geral</div>
+            </div>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 20%;">Categoria de Hostgroup</th>
+                            <th style="width: 15%; text-align: right;">Qtd. Falhas</th>
+                            <th style="width: 15%; text-align: right;">% do Total</th>
+                            <th style="width: 25%;">Maior Ofensor (Host)</th>
+                            <th style="width: 25%;">Erro Principal da Categoria</th>
+                        </tr>
+                    </thead>
+                    <tbody id="category-tbody">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Filters Section -->
+        <section class="filter-panel">
+            <div class="filter-group search">
+                <label class="filter-label" for="search-input">Pesquisa Rápida</label>
+                <input type="text" id="search-input" class="input-control" placeholder="Buscar por host, item, chave ou mensagem de erro...">
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label" for="type-filter">Tipo de Item</label>
+                <select id="type-filter" class="input-control">
+                    <option value="">Todos os tipos</option>
+                    <!-- Will be populated dynamically -->
+                </select>
+            </div>
+
+            <button class="btn btn-reset" id="btn-reset-filters">Limpar Filtros</button>
+        </section>
+
+        <!-- Results Table Container -->
+        <section class="results-container">
+            <div class="results-header">
+                <h2 class="results-title">Itens Identificados com Falha</h2>
+                <div class="results-count" id="results-count-label">Carregando...</div>
+            </div>
+
+            <!-- Loading View -->
+            <div id="loading-view" class="loading-state">
+                <div class="loading-spinner"></div>
+                <p>Buscando itens não suportados do Zabbix... Por favor, aguarde.</p>
+            </div>
+
+            <!-- Empty View -->
+            <div id="empty-view" class="empty-state" style="display: none;">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <h3 class="empty-title">Nenhum item não suportado</h3>
+                <p class="empty-desc">Tudo limpo! Não foram encontrados itens habilitados com estado não suportado.</p>
+            </div>
+
+            <!-- Table View -->
+            <div id="table-view" class="table-responsive" style="display: none;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 15%;">Host</th>
+                            <th style="width: 25%;">Item</th>
+                            <th style="width: 20%;">Chave (Key)</th>
+                            <th style="width: 15%;">Tipo de Coleta</th>
+                            <th style="width: 25%;">Descrição do Erro</th>
+                        </tr>
+                    </thead>
+                    <tbody id="problems-tbody">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination Bar -->
+            <div id="pagination-controls" class="pagination-bar" style="display: none;">
+                <div class="pagination-info" id="pagination-info-text">
+                    Mostrando 0-0 de 0 itens
+                </div>
+                <div class="pagination-buttons">
+                    <button class="btn btn-sm" id="btn-page-first" title="Primeira Página">
+                        &laquo;
+                    </button>
+                    <button class="btn btn-sm" id="btn-page-prev" title="Página Anterior">
+                        &lsaquo;
+                    </button>
+                    <span class="page-indicator" id="page-indicator-text">
+                        Página 1 de 1
+                    </span>
+                    <button class="btn btn-sm" id="btn-page-next" title="Próxima Página">
+                        &rsaquo;
+                    </button>
+                    <button class="btn btn-sm" id="btn-page-last" title="Última Página">
+                        &raquo;
+                    </button>
+                </div>
+                <div class="pagination-limit">
+                    <label for="limit-select">Itens por página:</label>
+                    <select id="limit-select" class="input-control select-sm">
+                        <option value="50">50</option>
+                        <option value="100" selected>100</option>
+                        <option value="200">200</option>
+                        <option value="500">500</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+        </div><!-- /view-unsupported -->
+
+        <!-- View: Coletas Master -->
+        <div id="view-masters" style="display: none; flex-direction: column; gap: 2rem;">
+            <!-- Metrics Grid -->
+            <section class="metrics-grid">
+                <div class="metric-card types">
+                    <span class="metric-title">Coletas Master</span>
+                    <span class="metric-value" id="m-metric-total">0</span>
+                    <span class="metric-desc">Itens master definidos em templates (com dependentes)</span>
+                </div>
+                <div class="metric-card gap">
+                    <span class="metric-title">Sem Alerta nodata()</span>
+                    <span class="metric-value" id="m-metric-gap">0</span>
+                    <span class="metric-desc">Masters sem trigger de falha de coleta</span>
+                </div>
+                <div class="metric-card coverage">
+                    <span class="metric-title">Com Alerta nodata()</span>
+                    <span class="metric-value" id="m-metric-ok">0</span>
+                    <span class="metric-desc">Masters protegidos por trigger nodata()</span>
+                </div>
+                <div class="metric-card hosts">
+                    <span class="metric-title">Cobertura</span>
+                    <span class="metric-value" id="m-metric-coverage">0%</span>
+                    <span class="metric-desc">% de masters com alerta de falha</span>
+                </div>
+            </section>
+
+            <!-- Filters -->
+            <section class="filter-panel">
+                <div class="filter-group search">
+                    <label class="filter-label" for="m-search-input">Pesquisa Rápida</label>
+                    <input type="text" id="m-search-input" class="input-control" placeholder="Buscar por template, item, chave ou trigger...">
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label" for="m-coverage-filter">Cobertura</label>
+                    <select id="m-coverage-filter" class="input-control">
+                        <option value="">Todos</option>
+                        <option value="gap">Apenas SEM alerta nodata()</option>
+                        <option value="ok">Apenas COM alerta nodata()</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label" for="m-type-filter">Tipo de Item</label>
+                    <select id="m-type-filter" class="input-control">
+                        <option value="">Todos os tipos</option>
+                    </select>
+                </div>
+                <button class="btn btn-reset" id="m-btn-reset-filters">Limpar Filtros</button>
+            </section>
+
+            <!-- Results Table -->
+            <section class="results-container">
+                <div class="results-header">
+                    <h2 class="results-title">Coletas Master e Cobertura de Alerta nodata()</h2>
+                    <div class="results-count" id="m-results-count-label">Carregando...</div>
+                </div>
+
+                <div id="m-loading-view" class="loading-state">
+                    <div class="loading-spinner"></div>
+                    <p>Buscando coletas master do Zabbix... Por favor, aguarde.</p>
+                </div>
+
+                <div id="m-empty-view" class="empty-state" style="display: none;">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <h3 class="empty-title">Nenhuma coleta master encontrada</h3>
+                    <p class="empty-desc">Não foram encontrados itens de coleta master com itens dependentes.</p>
+                </div>
+
+                <div id="m-table-view" class="table-responsive" style="display: none;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 18%;">Template</th>
+                                <th style="width: 22%;">Item</th>
+                                <th style="width: 18%;">Chave (Key)</th>
+                                <th style="width: 12%;">Tipo de Coleta</th>
+                                <th style="width: 7%; text-align: right;">Dep.</th>
+                                <th style="width: 10%;">Alerta nodata</th>
+                                <th style="width: 13%;">Triggers nodata</th>
+                            </tr>
+                        </thead>
+                        <tbody id="m-tbody"></tbody>
+                    </table>
+                </div>
+
+                <div id="m-pagination-controls" class="pagination-bar" style="display: none;">
+                    <div class="pagination-info" id="m-pagination-info-text">Mostrando 0-0 de 0 itens</div>
+                    <div class="pagination-buttons">
+                        <button class="btn btn-sm" id="m-btn-page-first" title="Primeira Página">&laquo;</button>
+                        <button class="btn btn-sm" id="m-btn-page-prev" title="Página Anterior">&lsaquo;</button>
+                        <span class="page-indicator" id="m-page-indicator-text">Página 1 de 1</span>
+                        <button class="btn btn-sm" id="m-btn-page-next" title="Próxima Página">&rsaquo;</button>
+                        <button class="btn btn-sm" id="m-btn-page-last" title="Última Página">&raquo;</button>
+                    </div>
+                    <div class="pagination-limit">
+                        <label for="m-limit-select">Itens por página:</label>
+                        <select id="m-limit-select" class="input-control select-sm">
+                            <option value="50">50</option>
+                            <option value="100" selected>100</option>
+                            <option value="200">200</option>
+                            <option value="500">500</option>
+                        </select>
+                    </div>
+                </div>
+            </section>
+        </div><!-- /view-masters -->
+
+        <!-- View: Ordem de Resolução -->
+        <div id="view-priorities" style="display: none; flex-direction: column; gap: 2rem;">
+            <!-- Metrics Grid -->
+            <section class="metrics-grid">
+                <div class="metric-card total">
+                    <span class="metric-title">Total de Falhas</span>
+                    <span class="metric-value" id="p-metric-total">0</span>
+                    <span class="metric-desc">Itens não suportados considerados</span>
+                </div>
+                <div class="metric-card types">
+                    <span class="metric-title">Padrões Distintos</span>
+                    <span class="metric-value" id="p-metric-patterns">0</span>
+                    <span class="metric-desc">Tipos de erro após normalização</span>
+                </div>
+                <div class="metric-card focus">
+                    <span class="metric-title">Foco Imediato (Alta)</span>
+                    <span class="metric-value" id="p-metric-alta">0</span>
+                    <span class="metric-desc">Padrões prioritários para resolver primeiro</span>
+                </div>
+                <div class="metric-card hosts">
+                    <span class="metric-title">Impacto do #1</span>
+                    <span class="metric-value" id="p-metric-top">0%</span>
+                    <span class="metric-desc">% das falhas no maior ofensor</span>
+                </div>
+            </section>
+
+            <!-- Filters -->
+            <section class="filter-panel">
+                <div class="filter-group search">
+                    <label class="filter-label" for="p-search-input">Pesquisa Rápida</label>
+                    <input type="text" id="p-search-input" class="input-control" placeholder="Buscar por padrão de erro, tipo ou host...">
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label" for="p-priority-filter">Prioridade</label>
+                    <select id="p-priority-filter" class="input-control">
+                        <option value="">Todas</option>
+                        <option value="Alta">Alta</option>
+                        <option value="Média">Média</option>
+                        <option value="Baixa">Baixa</option>
+                    </select>
+                </div>
+                <button class="btn btn-reset" id="p-btn-reset-filters">Limpar Filtros</button>
+            </section>
+
+            <!-- Results Table -->
+            <section class="results-container">
+                <div class="results-header">
+                    <h2 class="results-title">Ordem de Resolução — Falhas que Mais se Repetem</h2>
+                    <div class="results-count" id="p-results-count-label">Carregando...</div>
+                </div>
+
+                <div id="p-loading-view" class="loading-state">
+                    <div class="loading-spinner"></div>
+                    <p>Agrupando e priorizando as falhas... Por favor, aguarde.</p>
+                </div>
+
+                <div id="p-empty-view" class="empty-state" style="display: none;">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <h3 class="empty-title">Nenhuma falha para priorizar</h3>
+                    <p class="empty-desc">Não há itens não suportados para agrupar.</p>
+                </div>
+
+                <div id="p-table-view" class="table-responsive" style="display: none;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 4%; text-align: center;">#</th>
+                                <th style="width: 9%;">Prioridade</th>
+                                <th style="width: 32%;">Padrão de Erro</th>
+                                <th style="width: 8%; text-align: right;">Itens</th>
+                                <th style="width: 7%; text-align: right;">Hosts</th>
+                                <th style="width: 8%; text-align: right;">% Total</th>
+                                <th style="width: 8%; text-align: right;">% Acum.</th>
+                                <th style="width: 12%;">Tipo Dominante</th>
+                                <th style="width: 12%;">Maior Ofensor</th>
+                            </tr>
+                        </thead>
+                        <tbody id="p-tbody"></tbody>
+                    </table>
+                </div>
+
+                <div id="p-pagination-controls" class="pagination-bar" style="display: none;">
+                    <div class="pagination-info" id="p-pagination-info-text">Mostrando 0-0 de 0 padrões</div>
+                    <div class="pagination-buttons">
+                        <button class="btn btn-sm" id="p-btn-page-first" title="Primeira Página">&laquo;</button>
+                        <button class="btn btn-sm" id="p-btn-page-prev" title="Página Anterior">&lsaquo;</button>
+                        <span class="page-indicator" id="p-page-indicator-text">Página 1 de 1</span>
+                        <button class="btn btn-sm" id="p-btn-page-next" title="Próxima Página">&rsaquo;</button>
+                        <button class="btn btn-sm" id="p-btn-page-last" title="Última Página">&raquo;</button>
+                    </div>
+                    <div class="pagination-limit">
+                        <label for="p-limit-select">Itens por página:</label>
+                        <select id="p-limit-select" class="input-control select-sm">
+                            <option value="25">25</option>
+                            <option value="50" selected>50</option>
+                            <option value="100">100</option>
+                            <option value="200">200</option>
+                        </select>
+                    </div>
+                </div>
+            </section>
+        </div><!-- /view-priorities -->
+    </main>
+
+    <footer>
+        <p>Monitoramento de Coleta Zabbix &copy; 2026. Desenvolvido para diagnóstico ágil de falhas de coleta.</p>
+    </footer>
+
+    <script>
+        // State variables
+        let allProblems = []; // holds all unsupported items
+        let filteredItems = [];
+        let uniqueTypesMap = {}; // type_code -> label
+        let isFetching = false;
+        
+        // Pagination state
+        let currentPage = 1;
+        let itemsPerPage = 100;
+        
+        // DOM Elements
+        const btnRefresh = document.getElementById('btn-refresh');
+        const iconRefresh = document.getElementById('icon-refresh');
+        const lastUpdateTime = document.getElementById('last-update-time');
+        
+        const metricTotal = document.getElementById('metric-total');
+        const metricHosts = document.getElementById('metric-hosts');
+        const metricTypes = document.getElementById('metric-types');
+        
+        const searchInput = document.getElementById('search-input');
+        const typeFilter = document.getElementById('type-filter');
+        const btnResetFilters = document.getElementById('btn-reset-filters');
+        
+        const resultsCountLabel = document.getElementById('results-count-label');
+        const loadingView = document.getElementById('loading-view');
+        const emptyView = document.getElementById('empty-view');
+        const tableView = document.getElementById('table-view');
+        const problemsTbody = document.getElementById('problems-tbody');
+        const categoryTbody = document.getElementById('category-tbody');
+
+        // Pagination controls
+        const paginationControls = document.getElementById('pagination-controls');
+        const paginationInfoText = document.getElementById('pagination-info-text');
+        const pageIndicatorText = document.getElementById('page-indicator-text');
+        const btnPageFirst = document.getElementById('btn-page-first');
+        const btnPagePrev = document.getElementById('btn-page-prev');
+        const btnPageNext = document.getElementById('btn-page-next');
+        const btnPageLast = document.getElementById('btn-page-last');
+        const limitSelect = document.getElementById('limit-select');
+
+        // Fetch data from Flask API
+        async function fetchProblems(force = false) {
+            if (isFetching) return;
+            isFetching = true;
+            
+            // UI Feedback for loading
+            iconRefresh.classList.add('spin');
+            btnRefresh.disabled = true;
+            loadingView.style.display = 'flex';
+            tableView.style.display = 'none';
+            emptyView.style.display = 'none';
+            paginationControls.style.display = 'none';
+            resultsCountLabel.textContent = 'Carregando...';
+
+            try {
+                const url = force ? '/api/problems?force=true' : '/api/problems';
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`Erro na API Zabbix: ${response.statusText}`);
+                }
+                
+                allProblems = await response.json();
+                
+                // Update Last Update Clock
+                const now = new Date();
+                lastUpdateTime.textContent = `Última atualização: ${now.toLocaleTimeString()}`;
+                
+                // Update original dynamic filters
+                updateTypeDropdown();
+                
+                // Apply filters & render
+                applyFiltersAndRender();
+                
+            } catch (error) {
+                console.error("Falha ao coletar dados do Zabbix:", error);
+                resultsCountLabel.textContent = 'Erro ao buscar dados';
+                problemsTbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--error-color); font-weight: 500; padding: 2rem;">
+                    Falha na comunicação com o Zabbix. Verifique as credenciais no arquivo .env ou o status da API.
+                </td></tr>`;
+                loadingView.style.display = 'none';
+                tableView.style.display = 'block';
+            } finally {
+                isFetching = false;
+                iconRefresh.classList.remove('spin');
+                btnRefresh.disabled = false;
+            }
+        }
+
+        // Collect all unique item types
+        function updateTypeDropdown() {
+            uniqueTypesMap = {};
+            allProblems.forEach(item => {
+                if (item.type_code) {
+                    uniqueTypesMap[item.type_code] = item.type;
+                }
+            });
+
+            // Save active value if any
+            const activeVal = typeFilter.value;
+            
+            // Populate select
+            typeFilter.innerHTML = '<option value="">Todos os tipos</option>';
+            
+            // Sort by type label
+            const sortedTypes = Object.entries(uniqueTypesMap).sort((a, b) => a[1].localeCompare(b[1]));
+            sortedTypes.forEach(([code, label]) => {
+                const opt = document.createElement('option');
+                opt.value = code;
+                opt.textContent = label;
+                typeFilter.appendChild(opt);
+            });
+
+            // Restore active value if still available
+            if (activeVal && uniqueTypesMap[activeVal]) {
+                typeFilter.value = activeVal;
+            }
+        }
+
+        // Apply filters in memory
+        function applyFiltersAndRender() {
+            const searchQuery = searchInput.value.toLowerCase().trim();
+            const selectedType = typeFilter.value;
+
+            // Filter rows
+            filteredItems = allProblems.filter(row => {
+                // Search match
+                const matchSearch = !searchQuery || 
+                    (row.host && row.host.toLowerCase().includes(searchQuery)) ||
+                    (row.item && row.item.toLowerCase().includes(searchQuery)) ||
+                    (row.key && row.key.toLowerCase().includes(searchQuery)) ||
+                    (row.error && row.error.toLowerCase().includes(searchQuery));
+
+                // Type match
+                const matchType = !selectedType || String(row.type_code) === selectedType;
+
+                return matchSearch && matchType;
+            });
+
+            // Update Metrics Cards based on dynamic ALL data
+            updateMetrics(allProblems);
+
+            // Update Category summary table based on FILTERED data
+            updateCategoryTable(filteredItems);
+ 
+            // Reset current page to 1 on filter trigger
+            currentPage = 1;
+ 
+            // Render Page
+            renderTablePage();
+        }
+
+        function updateMetrics(data) {
+            metricTotal.textContent = data.length.toLocaleString();
+            
+            const uniqueHosts = new Set(data.map(r => r.host).filter(h => h && h !== '-'));
+            metricHosts.textContent = uniqueHosts.size.toLocaleString();
+            
+            const uniqueTypes = new Set(data.map(r => r.type_code).filter(t => t));
+            metricTypes.textContent = uniqueTypes.size;
+        }
+
+        function normalizeErrorText(errorMsg) {
+            if (!errorMsg) return "Unsupported item (no error description)";
+            // Replace hex hashes (length >= 8)
+            let msg = errorMsg.replace(/\b[a-fA-F0-9]{8,}\b/g, '<hash>');
+            // Replace interface cali...
+            msg = msg.replace(/\bcali[a-zA-Z0-9]+\b/g, 'cali<id>');
+            // Replace numbers
+            msg = msg.replace(/\b\d+\b/g, '#');
+            // Replace single/double quoted strings
+            msg = msg.replace(/\'[^\']+\'/g, "'<string>'");
+            msg = msg.replace(/\"[^\"]+\"/g, '"<string>"');
+            // Normalize spaces
+            msg = msg.replace(/\s+/g, ' ').trim();
+            return msg;
+        }
+
+        function updateCategoryTable(data) {
+            const categories = ["Databases", "Network", "Applications", "Infrastructure", "Servers & Cloud", "All"];
+            const totalCount = data.length;
+            
+            // Initialize stats
+            const stats = {};
+            categories.forEach(cat => {
+                stats[cat] = {
+                    count: 0,
+                    hosts: {},
+                    errors: {}
+                };
+            });
+
+            // Count occurrences
+            data.forEach(item => {
+                const cat = item.category || "All";
+                if (!stats[cat]) {
+                    stats[cat] = { count: 0, hosts: {}, errors: {} };
+                }
+                stats[cat].count++;
+
+                if (item.host) {
+                    stats[cat].hosts[item.host] = (stats[cat].hosts[item.host] || 0) + 1;
+                }
+
+                if (item.error) {
+                    const normErr = normalizeErrorText(item.error);
+                    stats[cat].errors[normErr] = (stats[cat].errors[normErr] || 0) + 1;
+                }
+            });
+
+            // Render table rows
+            categoryTbody.innerHTML = '';
+            categories.forEach(cat => {
+                const s = stats[cat];
+                const count = s.count;
+                const pct = totalCount > 0 ? (count / totalCount * 100).toFixed(1) + '%' : '0.0%';
+
+                // Maior Ofensor Host
+                let topHostStr = "-";
+                let maxHostCount = 0;
+                Object.entries(s.hosts).forEach(([host, hCount]) => {
+                    if (hCount > maxHostCount) {
+                        maxHostCount = hCount;
+                        topHostStr = `${host} (${hCount} falhas)`;
+                    }
+                });
+
+                // Erro Principal
+                let topErrorStr = "-";
+                let maxErrorCount = 0;
+                Object.entries(s.errors).forEach(([errPattern, eCount]) => {
+                    if (eCount > maxErrorCount) {
+                        maxErrorCount = eCount;
+                        topErrorStr = errPattern;
+                    }
+                });
+
+                const tr = document.createElement('tr');
+                tr.className = 'row-hover';
+
+                const tdCat = document.createElement('td');
+                tdCat.style.fontWeight = '600';
+                tdCat.textContent = cat;
+                tr.appendChild(tdCat);
+
+                const tdCount = document.createElement('td');
+                tdCount.style.textAlign = 'right';
+                tdCount.textContent = count.toLocaleString();
+                tr.appendChild(tdCount);
+
+                const tdPct = document.createElement('td');
+                tdPct.style.textAlign = 'right';
+                tdPct.textContent = pct;
+                tr.appendChild(tdPct);
+
+                const tdHost = document.createElement('td');
+                tdHost.className = 'text-wrap-cell';
+                tdHost.textContent = topHostStr;
+                tr.appendChild(tdHost);
+
+                const tdErr = document.createElement('td');
+                tdErr.className = 'text-wrap-cell';
+                tdErr.style.fontSize = '0.8rem';
+                tdErr.style.color = count > 0 ? 'var(--text-secondary)' : 'var(--text-muted)';
+                tdErr.textContent = topErrorStr;
+                tr.appendChild(tdErr);
+
+                categoryTbody.appendChild(tr);
+            });
+        }
+
+        // Render current page slices of data
+        function renderTablePage() {
+            loadingView.style.display = 'none';
+            const totalItems = filteredItems.length;
+            resultsCountLabel.textContent = `${totalItems.toLocaleString()} de ${allProblems.length.toLocaleString()} itens`;
+
+            if (totalItems === 0) {
+                tableView.style.display = 'none';
+                emptyView.style.display = 'flex';
+                paginationControls.style.display = 'none';
+                return;
+            }
+
+            emptyView.style.display = 'none';
+            tableView.style.display = 'block';
+            paginationControls.style.display = 'flex';
+
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+            
+            // Adjust current page bounds
+            if (currentPage < 1) currentPage = 1;
+            if (currentPage > totalPages) currentPage = totalPages;
+
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+
+            // Update pagination text / disabled state on buttons
+            paginationInfoText.textContent = `Mostrando ${(startIndex + 1).toLocaleString()} a ${endIndex.toLocaleString()} de ${totalItems.toLocaleString()} itens`;
+            pageIndicatorText.textContent = `Página ${currentPage} de ${totalPages}`;
+
+            btnPageFirst.disabled = currentPage === 1;
+            btnPagePrev.disabled = currentPage === 1;
+            btnPageNext.disabled = currentPage === totalPages;
+            btnPageLast.disabled = currentPage === totalPages;
+
+            // Populate table rows
+            problemsTbody.innerHTML = '';
+            
+            const pageData = filteredItems.slice(startIndex, endIndex);
+            pageData.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.className = 'row-hover';
+
+                // Host
+                const tdHost = document.createElement('td');
+                tdHost.className = 'text-wrap-cell';
+                tdHost.style.fontWeight = '500';
+                tdHost.textContent = row.host;
+                tr.appendChild(tdHost);
+
+                // Item Name
+                const tdItem = document.createElement('td');
+                tdItem.className = 'text-wrap-cell';
+                tdItem.textContent = row.item;
+                tr.appendChild(tdItem);
+
+                // Item Key
+                const tdKey = document.createElement('td');
+                const spanKey = document.createElement('span');
+                spanKey.className = 'item-key';
+                spanKey.textContent = row.key;
+                tdKey.appendChild(spanKey);
+                tr.appendChild(tdKey);
+
+                // Type of Coleta
+                const tdType = document.createElement('td');
+                const spanType = document.createElement('span');
+                spanType.className = 'type-badge';
+                spanType.textContent = row.type;
+                tdType.appendChild(spanType);
+                tr.appendChild(tdType);
+
+                // Error Message description
+                const tdError = document.createElement('td');
+                tdError.className = 'error-text';
+                tdError.textContent = row.error;
+                tr.appendChild(tdError);
+
+                problemsTbody.appendChild(tr);
+            });
+        }
+
+        // Pagination buttons Event Listeners
+        btnPageFirst.addEventListener('click', () => {
+            if (currentPage !== 1) {
+                currentPage = 1;
+                renderTablePage();
+            }
+        });
+
+        btnPagePrev.addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                renderTablePage();
+            }
+        });
+
+        btnPageNext.addEventListener('click', () => {
+            const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderTablePage();
+            }
+        });
+
+        btnPageLast.addEventListener('click', () => {
+            const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
+            if (currentPage !== totalPages) {
+                currentPage = totalPages;
+                renderTablePage();
+            }
+        });
+
+        limitSelect.addEventListener('change', () => {
+            itemsPerPage = parseInt(limitSelect.value, 10);
+            currentPage = 1;
+            renderTablePage();
+        });
+
+        // Filters Event Listeners
+        searchInput.addEventListener('input', applyFiltersAndRender);
+        typeFilter.addEventListener('change', applyFiltersAndRender);
+        
+        btnResetFilters.addEventListener('click', () => {
+            searchInput.value = '';
+            typeFilter.value = '';
+            applyFiltersAndRender();
+        });
+
+        btnRefresh.addEventListener('click', () => {
+            if (activeView === 'masters') {
+                fetchMasters(true);
+            } else if (activeView === 'priorities') {
+                fetchPriorities(true);
+            } else {
+                fetchProblems(true);
+            }
+        });
+
+        const btnExport = document.getElementById('btn-export');
+        btnExport.addEventListener('click', () => {
+            const exportUrls = {
+                masters: '/api/export/masters/excel',
+                priorities: '/api/export/priorities/excel',
+                unsupported: '/api/export/excel',
+            };
+            window.location.href = exportUrls[activeView] || exportUrls.unsupported;
+        });
+
+        // ============================================================
+        // Tab switching
+        // ============================================================
+        let activeView = 'unsupported';
+        let mastersLoaded = false;
+        let prioritiesLoaded = false;
+
+        const views = {
+            unsupported: document.getElementById('view-unsupported'),
+            masters: document.getElementById('view-masters'),
+            priorities: document.getElementById('view-priorities'),
+        };
+        const tabs = {
+            unsupported: document.getElementById('tab-unsupported'),
+            masters: document.getElementById('tab-masters'),
+            priorities: document.getElementById('tab-priorities'),
+        };
+
+        function switchView(view) {
+            activeView = view;
+            Object.keys(views).forEach(key => {
+                views[key].style.display = (key === view) ? 'flex' : 'none';
+                tabs[key].classList.toggle('active', key === view);
+            });
+
+            if (view === 'masters' && !mastersLoaded) {
+                fetchMasters(false);
+            } else if (view === 'priorities' && !prioritiesLoaded) {
+                fetchPriorities(false);
+            }
+        }
+
+        tabs.unsupported.addEventListener('click', () => switchView('unsupported'));
+        tabs.masters.addEventListener('click', () => switchView('masters'));
+        tabs.priorities.addEventListener('click', () => switchView('priorities'));
+
+        // ============================================================
+        // Masters view logic
+        // ============================================================
+        let allMasters = [];
+        let filteredMasters = [];
+        let masterTypesMap = {};
+        let isFetchingMasters = false;
+        let mCurrentPage = 1;
+        let mItemsPerPage = 100;
+
+        const mTotal = document.getElementById('m-metric-total');
+        const mGap = document.getElementById('m-metric-gap');
+        const mOk = document.getElementById('m-metric-ok');
+        const mCoverage = document.getElementById('m-metric-coverage');
+
+        const mSearchInput = document.getElementById('m-search-input');
+        const mCoverageFilter = document.getElementById('m-coverage-filter');
+        const mTypeFilter = document.getElementById('m-type-filter');
+        const mBtnReset = document.getElementById('m-btn-reset-filters');
+
+        const mResultsCountLabel = document.getElementById('m-results-count-label');
+        const mLoadingView = document.getElementById('m-loading-view');
+        const mEmptyView = document.getElementById('m-empty-view');
+        const mTableView = document.getElementById('m-table-view');
+        const mTbody = document.getElementById('m-tbody');
+
+        const mPagination = document.getElementById('m-pagination-controls');
+        const mPaginationInfo = document.getElementById('m-pagination-info-text');
+        const mPageIndicator = document.getElementById('m-page-indicator-text');
+        const mBtnFirst = document.getElementById('m-btn-page-first');
+        const mBtnPrev = document.getElementById('m-btn-page-prev');
+        const mBtnNext = document.getElementById('m-btn-page-next');
+        const mBtnLast = document.getElementById('m-btn-page-last');
+        const mLimitSelect = document.getElementById('m-limit-select');
+
+        async function fetchMasters(force = false) {
+            if (isFetchingMasters) return;
+            isFetchingMasters = true;
+
+            iconRefresh.classList.add('spin');
+            btnRefresh.disabled = true;
+            mLoadingView.style.display = 'flex';
+            mTableView.style.display = 'none';
+            mEmptyView.style.display = 'none';
+            mPagination.style.display = 'none';
+            mResultsCountLabel.textContent = 'Carregando...';
+
+            try {
+                const url = force ? '/api/masters?force=true' : '/api/masters';
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`Erro na API Zabbix: ${response.statusText}`);
+                }
+                const data = await response.json();
+                if (data && data.error) {
+                    throw new Error(data.error);
+                }
+                allMasters = data;
+                mastersLoaded = true;
+
+                const now = new Date();
+                lastUpdateTime.textContent = `Última atualização: ${now.toLocaleTimeString()}`;
+
+                updateMasterTypeDropdown();
+                applyMasterFiltersAndRender();
+            } catch (error) {
+                console.error("Falha ao coletar coletas master:", error);
+                mResultsCountLabel.textContent = 'Erro ao buscar dados';
+                mLoadingView.style.display = 'none';
+                mTableView.style.display = 'block';
+                mTbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--error-color); font-weight: 500; padding: 2rem;">
+                    Falha na comunicação com o Zabbix. Verifique o .env ou a API. (${error.message})
+                </td></tr>`;
+            } finally {
+                isFetchingMasters = false;
+                iconRefresh.classList.remove('spin');
+                btnRefresh.disabled = false;
+            }
+        }
+
+        function updateMasterTypeDropdown() {
+            masterTypesMap = {};
+            allMasters.forEach(item => {
+                if (item.type_code) masterTypesMap[item.type_code] = item.type;
+            });
+            const activeVal = mTypeFilter.value;
+            mTypeFilter.innerHTML = '<option value="">Todos os tipos</option>';
+            Object.entries(masterTypesMap)
+                .sort((a, b) => a[1].localeCompare(b[1]))
+                .forEach(([code, label]) => {
+                    const opt = document.createElement('option');
+                    opt.value = code;
+                    opt.textContent = label;
+                    mTypeFilter.appendChild(opt);
+                });
+            if (activeVal && masterTypesMap[activeVal]) mTypeFilter.value = activeVal;
+        }
+
+        function applyMasterFiltersAndRender() {
+            const searchQuery = mSearchInput.value.toLowerCase().trim();
+            const selectedType = mTypeFilter.value;
+            const coverage = mCoverageFilter.value;
+
+            filteredMasters = allMasters.filter(row => {
+                const matchSearch = !searchQuery ||
+                    (row.template && row.template.toLowerCase().includes(searchQuery)) ||
+                    (row.item && row.item.toLowerCase().includes(searchQuery)) ||
+                    (row.key && row.key.toLowerCase().includes(searchQuery)) ||
+                    (row.nodata_triggers && row.nodata_triggers.toLowerCase().includes(searchQuery));
+                const matchType = !selectedType || String(row.type_code) === selectedType;
+                const matchCoverage = !coverage ||
+                    (coverage === 'gap' && !row.has_nodata_alert) ||
+                    (coverage === 'ok' && row.has_nodata_alert);
+                return matchSearch && matchType && matchCoverage;
+            });
+
+            updateMasterMetrics(allMasters);
+            mCurrentPage = 1;
+            renderMasterPage();
+        }
+
+        function updateMasterMetrics(data) {
+            const total = data.length;
+            const ok = data.filter(r => r.has_nodata_alert).length;
+            const gap = total - ok;
+            mTotal.textContent = total.toLocaleString();
+            mOk.textContent = ok.toLocaleString();
+            mGap.textContent = gap.toLocaleString();
+            mCoverage.textContent = total > 0 ? (ok / total * 100).toFixed(1) + '%' : '0%';
+        }
+
+        function renderMasterPage() {
+            mLoadingView.style.display = 'none';
+            const totalItems = filteredMasters.length;
+            mResultsCountLabel.textContent = `${totalItems.toLocaleString()} de ${allMasters.length.toLocaleString()} itens`;
+
+            if (totalItems === 0) {
+                mTableView.style.display = 'none';
+                mEmptyView.style.display = 'flex';
+                mPagination.style.display = 'none';
+                return;
+            }
+
+            mEmptyView.style.display = 'none';
+            mTableView.style.display = 'block';
+            mPagination.style.display = 'flex';
+
+            const totalPages = Math.ceil(totalItems / mItemsPerPage);
+            if (mCurrentPage < 1) mCurrentPage = 1;
+            if (mCurrentPage > totalPages) mCurrentPage = totalPages;
+
+            const startIndex = (mCurrentPage - 1) * mItemsPerPage;
+            const endIndex = Math.min(startIndex + mItemsPerPage, totalItems);
+
+            mPaginationInfo.textContent = `Mostrando ${(startIndex + 1).toLocaleString()} a ${endIndex.toLocaleString()} de ${totalItems.toLocaleString()} itens`;
+            mPageIndicator.textContent = `Página ${mCurrentPage} de ${totalPages}`;
+            mBtnFirst.disabled = mCurrentPage === 1;
+            mBtnPrev.disabled = mCurrentPage === 1;
+            mBtnNext.disabled = mCurrentPage === totalPages;
+            mBtnLast.disabled = mCurrentPage === totalPages;
+
+            mTbody.innerHTML = '';
+            filteredMasters.slice(startIndex, endIndex).forEach(row => {
+                const tr = document.createElement('tr');
+                tr.className = 'row-hover';
+
+                const tdTemplate = document.createElement('td');
+                tdTemplate.className = 'text-wrap-cell';
+                tdTemplate.style.fontWeight = '500';
+                tdTemplate.textContent = row.template;
+                tr.appendChild(tdTemplate);
+
+                const tdItem = document.createElement('td');
+                tdItem.className = 'text-wrap-cell';
+                tdItem.textContent = row.item;
+                tr.appendChild(tdItem);
+
+                const tdKey = document.createElement('td');
+                const spanKey = document.createElement('span');
+                spanKey.className = 'item-key';
+                spanKey.textContent = row.key;
+                tdKey.appendChild(spanKey);
+                tr.appendChild(tdKey);
+
+                const tdType = document.createElement('td');
+                const spanType = document.createElement('span');
+                spanType.className = 'type-badge';
+                spanType.textContent = row.type;
+                tdType.appendChild(spanType);
+                tr.appendChild(tdType);
+
+                const tdDep = document.createElement('td');
+                tdDep.style.textAlign = 'right';
+                const spanDep = document.createElement('span');
+                spanDep.className = 'dep-badge';
+                spanDep.textContent = row.dependents;
+                tdDep.appendChild(spanDep);
+                tr.appendChild(tdDep);
+
+                const tdCov = document.createElement('td');
+                const spanCov = document.createElement('span');
+                spanCov.className = 'coverage-badge ' + (row.has_nodata_alert ? 'coverage-ok' : 'coverage-gap');
+                spanCov.textContent = row.has_nodata_alert ? 'SIM' : 'FALTA';
+                tdCov.appendChild(spanCov);
+                tr.appendChild(tdCov);
+
+                const tdTrig = document.createElement('td');
+                tdTrig.className = 'text-wrap-cell';
+                tdTrig.style.fontSize = '0.8rem';
+                tdTrig.style.color = 'var(--text-secondary)';
+                tdTrig.textContent = row.nodata_triggers;
+                tr.appendChild(tdTrig);
+
+                mTbody.appendChild(tr);
+            });
+        }
+
+        mBtnFirst.addEventListener('click', () => { if (mCurrentPage !== 1) { mCurrentPage = 1; renderMasterPage(); } });
+        mBtnPrev.addEventListener('click', () => { if (mCurrentPage > 1) { mCurrentPage--; renderMasterPage(); } });
+        mBtnNext.addEventListener('click', () => {
+            const totalPages = Math.ceil(filteredMasters.length / mItemsPerPage);
+            if (mCurrentPage < totalPages) { mCurrentPage++; renderMasterPage(); }
+        });
+        mBtnLast.addEventListener('click', () => {
+            const totalPages = Math.ceil(filteredMasters.length / mItemsPerPage);
+            if (mCurrentPage !== totalPages) { mCurrentPage = totalPages; renderMasterPage(); }
+        });
+        mLimitSelect.addEventListener('change', () => {
+            mItemsPerPage = parseInt(mLimitSelect.value, 10);
+            mCurrentPage = 1;
+            renderMasterPage();
+        });
+
+        mSearchInput.addEventListener('input', applyMasterFiltersAndRender);
+        mTypeFilter.addEventListener('change', applyMasterFiltersAndRender);
+        mCoverageFilter.addEventListener('change', applyMasterFiltersAndRender);
+        mBtnReset.addEventListener('click', () => {
+            mSearchInput.value = '';
+            mTypeFilter.value = '';
+            mCoverageFilter.value = '';
+            applyMasterFiltersAndRender();
+        });
+
+        // ============================================================
+        // Priorities view logic (resolution order)
+        // ============================================================
+        let allPriorities = [];
+        let filteredPriorities = [];
+        let isFetchingPriorities = false;
+        let pCurrentPage = 1;
+        let pItemsPerPage = 50;
+
+        const pTotal = document.getElementById('p-metric-total');
+        const pPatterns = document.getElementById('p-metric-patterns');
+        const pAlta = document.getElementById('p-metric-alta');
+        const pTop = document.getElementById('p-metric-top');
+
+        const pSearchInput = document.getElementById('p-search-input');
+        const pPriorityFilter = document.getElementById('p-priority-filter');
+        const pBtnReset = document.getElementById('p-btn-reset-filters');
+
+        const pResultsCountLabel = document.getElementById('p-results-count-label');
+        const pLoadingView = document.getElementById('p-loading-view');
+        const pEmptyView = document.getElementById('p-empty-view');
+        const pTableView = document.getElementById('p-table-view');
+        const pTbody = document.getElementById('p-tbody');
+
+        const pPagination = document.getElementById('p-pagination-controls');
+        const pPaginationInfo = document.getElementById('p-pagination-info-text');
+        const pPageIndicator = document.getElementById('p-page-indicator-text');
+        const pBtnFirst = document.getElementById('p-btn-page-first');
+        const pBtnPrev = document.getElementById('p-btn-page-prev');
+        const pBtnNext = document.getElementById('p-btn-page-next');
+        const pBtnLast = document.getElementById('p-btn-page-last');
+        const pLimitSelect = document.getElementById('p-limit-select');
+
+        const PRIORITY_CLASS = { 'Alta': 'priority-alta', 'Média': 'priority-media', 'Baixa': 'priority-baixa' };
+
+        async function fetchPriorities(force = false) {
+            if (isFetchingPriorities) return;
+            isFetchingPriorities = true;
+
+            iconRefresh.classList.add('spin');
+            btnRefresh.disabled = true;
+            pLoadingView.style.display = 'flex';
+            pTableView.style.display = 'none';
+            pEmptyView.style.display = 'none';
+            pPagination.style.display = 'none';
+            pResultsCountLabel.textContent = 'Carregando...';
+
+            try {
+                const url = force ? '/api/priorities?force=true' : '/api/priorities';
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`Erro na API Zabbix: ${response.statusText}`);
+                }
+                const data = await response.json();
+                if (data && data.error) {
+                    throw new Error(data.error);
+                }
+                allPriorities = data;
+                prioritiesLoaded = true;
+
+                const now = new Date();
+                lastUpdateTime.textContent = `Última atualização: ${now.toLocaleTimeString()}`;
+
+                applyPriorityFiltersAndRender();
+            } catch (error) {
+                console.error("Falha ao priorizar falhas:", error);
+                pResultsCountLabel.textContent = 'Erro ao buscar dados';
+                pLoadingView.style.display = 'none';
+                pTableView.style.display = 'block';
+                pTbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--error-color); font-weight: 500; padding: 2rem;">
+                    Falha na comunicação com o Zabbix. Verifique o .env ou a API. (${error.message})
+                </td></tr>`;
+            } finally {
+                isFetchingPriorities = false;
+                iconRefresh.classList.remove('spin');
+                btnRefresh.disabled = false;
+            }
+        }
+
+        function applyPriorityFiltersAndRender() {
+            const searchQuery = pSearchInput.value.toLowerCase().trim();
+            const priority = pPriorityFilter.value;
+
+            filteredPriorities = allPriorities.filter(row => {
+                const matchSearch = !searchQuery ||
+                    (row.pattern && row.pattern.toLowerCase().includes(searchQuery)) ||
+                    (row.top_type && row.top_type.toLowerCase().includes(searchQuery)) ||
+                    (row.top_host && row.top_host.toLowerCase().includes(searchQuery)) ||
+                    (row.top_category && row.top_category.toLowerCase().includes(searchQuery));
+                const matchPriority = !priority || row.priority === priority;
+                return matchSearch && matchPriority;
+            });
+
+            updatePriorityMetrics(allPriorities);
+            pCurrentPage = 1;
+            renderPriorityPage();
+        }
+
+        function updatePriorityMetrics(data) {
+            const totalFailures = data.reduce((sum, r) => sum + r.count, 0);
+            pTotal.textContent = totalFailures.toLocaleString();
+            pPatterns.textContent = data.length.toLocaleString();
+            pAlta.textContent = data.filter(r => r.priority === 'Alta').length.toLocaleString();
+            pTop.textContent = data.length > 0 ? (data[0].pct * 100).toFixed(1) + '%' : '0%';
+        }
+
+        function renderPriorityPage() {
+            pLoadingView.style.display = 'none';
+            const totalItems = filteredPriorities.length;
+            pResultsCountLabel.textContent = `${totalItems.toLocaleString()} de ${allPriorities.length.toLocaleString()} padrões`;
+
+            if (totalItems === 0) {
+                pTableView.style.display = 'none';
+                pEmptyView.style.display = 'flex';
+                pPagination.style.display = 'none';
+                return;
+            }
+
+            pEmptyView.style.display = 'none';
+            pTableView.style.display = 'block';
+            pPagination.style.display = 'flex';
+
+            const totalPages = Math.ceil(totalItems / pItemsPerPage);
+            if (pCurrentPage < 1) pCurrentPage = 1;
+            if (pCurrentPage > totalPages) pCurrentPage = totalPages;
+
+            const startIndex = (pCurrentPage - 1) * pItemsPerPage;
+            const endIndex = Math.min(startIndex + pItemsPerPage, totalItems);
+
+            pPaginationInfo.textContent = `Mostrando ${(startIndex + 1).toLocaleString()} a ${endIndex.toLocaleString()} de ${totalItems.toLocaleString()} padrões`;
+            pPageIndicator.textContent = `Página ${pCurrentPage} de ${totalPages}`;
+            pBtnFirst.disabled = pCurrentPage === 1;
+            pBtnPrev.disabled = pCurrentPage === 1;
+            pBtnNext.disabled = pCurrentPage === totalPages;
+            pBtnLast.disabled = pCurrentPage === totalPages;
+
+            pTbody.innerHTML = '';
+            filteredPriorities.slice(startIndex, endIndex).forEach(row => {
+                const tr = document.createElement('tr');
+                tr.className = 'row-hover';
+
+                const tdRank = document.createElement('td');
+                tdRank.className = 'rank-cell';
+                tdRank.textContent = row.rank;
+                tr.appendChild(tdRank);
+
+                const tdPrio = document.createElement('td');
+                const spanPrio = document.createElement('span');
+                spanPrio.className = 'priority-badge ' + (PRIORITY_CLASS[row.priority] || '');
+                spanPrio.textContent = row.priority;
+                tdPrio.appendChild(spanPrio);
+                tr.appendChild(tdPrio);
+
+                const tdPattern = document.createElement('td');
+                tdPattern.className = 'text-wrap-cell';
+                tdPattern.textContent = row.pattern;
+                tdPattern.title = row.sample || row.pattern;
+                tr.appendChild(tdPattern);
+
+                const tdCount = document.createElement('td');
+                tdCount.style.textAlign = 'right';
+                tdCount.style.fontWeight = '600';
+                tdCount.textContent = row.count.toLocaleString();
+                tr.appendChild(tdCount);
+
+                const tdHosts = document.createElement('td');
+                tdHosts.style.textAlign = 'right';
+                tdHosts.textContent = row.hosts.toLocaleString();
+                tr.appendChild(tdHosts);
+
+                const tdPct = document.createElement('td');
+                tdPct.style.textAlign = 'right';
+                tdPct.textContent = (row.pct * 100).toFixed(1) + '%';
+                tr.appendChild(tdPct);
+
+                const tdCum = document.createElement('td');
+                tdCum.style.textAlign = 'right';
+                tdCum.style.color = 'var(--text-secondary)';
+                tdCum.textContent = (row.cum_pct * 100).toFixed(1) + '%';
+                tr.appendChild(tdCum);
+
+                const tdType = document.createElement('td');
+                const spanType = document.createElement('span');
+                spanType.className = 'type-badge';
+                spanType.textContent = row.top_type;
+                tdType.appendChild(spanType);
+                tr.appendChild(tdType);
+
+                const tdHost = document.createElement('td');
+                tdHost.className = 'text-wrap-cell';
+                tdHost.style.fontSize = '0.8rem';
+                tdHost.style.color = 'var(--text-secondary)';
+                tdHost.textContent = row.top_host;
+                tr.appendChild(tdHost);
+
+                pTbody.appendChild(tr);
+            });
+        }
+
+        pBtnFirst.addEventListener('click', () => { if (pCurrentPage !== 1) { pCurrentPage = 1; renderPriorityPage(); } });
+        pBtnPrev.addEventListener('click', () => { if (pCurrentPage > 1) { pCurrentPage--; renderPriorityPage(); } });
+        pBtnNext.addEventListener('click', () => {
+            const totalPages = Math.ceil(filteredPriorities.length / pItemsPerPage);
+            if (pCurrentPage < totalPages) { pCurrentPage++; renderPriorityPage(); }
+        });
+        pBtnLast.addEventListener('click', () => {
+            const totalPages = Math.ceil(filteredPriorities.length / pItemsPerPage);
+            if (pCurrentPage !== totalPages) { pCurrentPage = totalPages; renderPriorityPage(); }
+        });
+        pLimitSelect.addEventListener('change', () => {
+            pItemsPerPage = parseInt(pLimitSelect.value, 10);
+            pCurrentPage = 1;
+            renderPriorityPage();
+        });
+
+        pSearchInput.addEventListener('input', applyPriorityFiltersAndRender);
+        pPriorityFilter.addEventListener('change', applyPriorityFiltersAndRender);
+        pBtnReset.addEventListener('click', () => {
+            pSearchInput.value = '';
+            pPriorityFilter.value = '';
+            applyPriorityFiltersAndRender();
+        });
+
+        // Initial fetch on load
+        document.addEventListener('DOMContentLoaded', () => fetchProblems(false));
+    </script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+py-zabbix
+python-dotenv
+flask
+openpyxl
